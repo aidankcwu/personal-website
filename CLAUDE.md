@@ -47,6 +47,10 @@ Preferred tone:
 - Slightly informal
 - Not corporate
 
+## Page Structure
+
+The website should have a simple app-style structure where the homepage acts as the central landing page and the project pages provide depth. At the top level, the app/ directory should contain the main routing files: layout.tsx for the shared page shell, metadata, fonts, and global structure; page.tsx for the homepage; and globals.css for Tailwind/global styling. Inside app/, create a projects/ route, with either a page.tsx for an optional project index page later and a dynamic [slug]/page.tsx route for individual project writeups. That lets every project live at a clean URL like /projects/kalshi-trading-agent without manually creating a separate route folder for every single one. The homepage itself should be built from reusable components rather than one giant file, so most visual sections should live in components/, with files like Hero.tsx, IntroCard.tsx, FeaturedProjects.tsx, ProjectCard.tsx, CurrentlyBuilding.tsx, Interests.tsx, Navbar.tsx, and Footer.tsx. Project information should live in a separate data/projects.ts file, which acts as the single source of truth for project titles, slugs, summaries, stack tags, links, images, and longer writeup content. The homepage can pull from that file to display featured cards, while the dynamic project pages can use the same data to render full project writeups. Static assets should go in public/, with public/resume.pdf for the resume download and public/images/ for the chess king hero image, project thumbnails, icons, or any other visuals. If you later add longer writing or markdown-based project pages, you can add a content/ directory for MDX files, but I would not start there unless you know you want blog-style writing. Overall, the structure should separate routing in app/, reusable UI in components/, project content/data in data/, and static files in public/, so the site stays easy to expand without becoming messy.
+
 ## Coding Guidelines
 
 Use simple, readable components.
