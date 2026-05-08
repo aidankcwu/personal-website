@@ -47,26 +47,6 @@ Preferred tone:
 - Slightly informal
 - Not corporate
 
-## Content Focus
-
-Highlight projects and interests related to:
-
-- AI systems
-- Quantitative trading
-- Applied machine learning
-- Data science
-- Research
-- Personal knowledge tools
-- Chess
-- Languages
-
-Important projects to include:
-
-- Kalshi autonomous trading agent
-- OCR-to-Obsidian/RAG knowledge pipeline
-- EMG/IMU gesture augmentation research
-- MD Anderson toxicity prediction work
-
 ## Coding Guidelines
 
 Use simple, readable components.
