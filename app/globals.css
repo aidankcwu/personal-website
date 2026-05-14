@@ -2,15 +2,41 @@
 
 html {
   scroll-behavior: smooth;
-}
-
-:root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  background: #0a0a0a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #0a0a0a;
+  color: #ededed;
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading), Georgia, serif;
+}
+
+/* Living halo for the section divider band. Three independently-cycling
+   radial-gradient layers drift laterally and pulse in opacity. Different
+   periods (7s / 11s / 13s) keep them from syncing — that's what makes it
+   read as "alive" instead of "pulsing." */
+@keyframes halo-drift-a {
+  0%, 100% { opacity: 0.55; transform: translate3d(-3%, 0, 0); }
+  50%      { opacity: 0.95; transform: translate3d(3%, 0, 0); }
+}
+
+@keyframes halo-drift-b {
+  0%, 100% { opacity: 0.4; transform: translate3d(4%, 0, 0); }
+  50%      { opacity: 0.85; transform: translate3d(-4%, 0, 0); }
+}
+
+@keyframes halo-drift-c {
+  0%, 100% { opacity: 0.5; transform: translate3d(0, -10%, 0) scale(1.05); }
+  50%      { opacity: 0.85; transform: translate3d(0, 10%, 0) scale(1.1); }
+}
+
+/* Outer rim glow breathing — modulates the box-shadow intensity by
+   animating an overlay's opacity rather than the shadow itself (cheaper). */
+@keyframes rim-breathe {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1; }
 }
