@@ -49,30 +49,37 @@ type Point = {
   cursor: { x: number; y: number; vx: number; vy: number }
 }
 
+// Dark-on-light reads considerably heavier than light-on-dark at the same alpha,
+// so the stroke is much fainter here than the original inverted version.
+const STROKE = '#111111'
+const STROKE_OPACITY = '0.085'
+const STROKE_WIDTH = '1'
+
 export default function WavyBackground() {
   const containerRef = useRef<HTMLDivElement>(null)
   const svgRef = useRef<SVGSVGElement>(null)
 
   useEffect(() => {
-    const container = containerRef.current!
-    const svg = svgRef.current!
+    const container = containerRef.current
+    const svg = svgRef.current
     if (!container || !svg) return
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     const mouse = { x: -10, y: 0, lx: 0, ly: 0, sx: 0, sy: 0, v: 0, vs: 0, a: 0, set: false }
     let lines: Point[][] = []
     let paths: SVGPathElement[] = []
     const noise = new PerlinNoise(Math.random())
-    let animId: number
+    let animId = 0
 
     function setSize() {
-      const b = container.getBoundingClientRect()
-      svg.style.width = `${b.width}px`
-      svg.style.height = `${b.height}px`
+      const b = container!.getBoundingClientRect()
+      svg!.style.width = `${b.width}px`
+      svg!.style.height = `${b.height}px`
     }
 
     function setLines() {
-      const b = container.getBoundingClientRect()
-      const { width, height } = b
+      const { width, height } = container!.getBoundingClientRect()
 
       lines = []
       paths.forEach((p) => p.remove())
@@ -100,19 +107,19 @@ export default function WavyBackground() {
 
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
         path.setAttribute('fill', 'none')
-        path.setAttribute('stroke', 'white')
-        path.setAttribute('stroke-width', '1.2')
-        path.setAttribute('stroke-opacity', '0.08')
-        svg.appendChild(path)
+        path.setAttribute('stroke', STROKE)
+        path.setAttribute('stroke-width', STROKE_WIDTH)
+        path.setAttribute('stroke-opacity', STROKE_OPACITY)
+        svg!.appendChild(path)
         paths.push(path)
         lines.push(points)
       }
     }
 
-    function updateMousePosition(x: number, y: number) {
-      const b = container.getBoundingClientRect()
-      mouse.x = x - b.left
-      mouse.y = y - b.top + window.scrollY
+    function updateMousePosition(clientX: number, clientY: number) {
+      const b = container!.getBoundingClientRect()
+      mouse.x = clientX - b.left
+      mouse.y = clientY - b.top
       if (!mouse.set) {
         mouse.sx = mouse.x
         mouse.sy = mouse.y
@@ -201,24 +208,38 @@ export default function WavyBackground() {
     setLines()
 
     const onResize = () => { setSize(); setLines() }
-    const onMouseMove = (e: MouseEvent) => updateMousePosition(e.pageX, e.pageY)
-    const onTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-      const touch = e.touches[0]
-      updateMousePosition(touch.clientX, touch.clientY)
-    }
+    const onMouseMove = (e: MouseEvent) => updateMousePosition(e.clientX, e.clientY)
 
     window.addEventListener('resize', onResize)
-    window.addEventListener('mousemove', onMouseMove, { passive: true })
-    container.addEventListener('touchmove', onTouchMove, { passive: false } as AddEventListenerOptions)
 
-    animId = requestAnimationFrame(tick)
+    // The field only exists in the hero, so the loop is parked whenever the
+    // hero is off-screen — the king's own render loop has the page to itself
+    // from that point on.
+    const observer = new IntersectionObserver(([entry]) => {
+      if (reduceMotion) return
+      if (entry.isIntersecting && !animId) {
+        animId = requestAnimationFrame(tick)
+      } else if (!entry.isIntersecting && animId) {
+        cancelAnimationFrame(animId)
+        animId = 0
+      }
+    })
+
+    if (reduceMotion) {
+      // Render a single static frame — the field still provides texture, but
+      // nothing moves and the cursor is not tracked.
+      movePoints(0)
+      drawLines()
+    } else {
+      window.addEventListener('mousemove', onMouseMove, { passive: true })
+      observer.observe(container)
+    }
 
     return () => {
       cancelAnimationFrame(animId)
+      observer.disconnect()
       window.removeEventListener('resize', onResize)
       window.removeEventListener('mousemove', onMouseMove)
-      container.removeEventListener('touchmove', onTouchMove)
       paths.forEach((p) => p.remove())
     }
   }, [])
@@ -226,6 +247,7 @@ export default function WavyBackground() {
   return (
     <div
       ref={containerRef}
+      aria-hidden="true"
       className="pointer-events-none absolute inset-0 overflow-hidden"
     >
       <svg ref={svgRef} className="block" />

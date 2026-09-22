@@ -1,42 +1,45 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------------
+   Design tokens. Monochrome by rule — no chroma anywhere on the page.
+   Separation comes from hairline rules and whitespace, never from elevation:
+   no shadows, no blurs, no gradients, no glows.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-surface: #ffffff;
+  --color-ink: #111111;
+  --color-muted: #6b6b6b;
+  --color-faint: #9a9a9a;
+  --color-rule: #e6e6e6;
+
+  --font-display: var(--font-display), Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+
+  /* Single shared easing curve for the whole motion system. */
+  --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 html {
+  background: var(--color-surface);
   scroll-behavior: smooth;
-  background: #0a0a0a;
 }
 
 body {
-  background: #0a0a0a;
-  color: #ededed;
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
-h1, h2, h3 {
-  font-family: var(--font-heading), Georgia, serif;
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-style: normal;
 }
 
-/* Living halo for the section divider band. Three independently-cycling
-   radial-gradient layers drift laterally and pulse in opacity. Different
-   periods (7s / 11s / 13s) keep them from syncing — that's what makes it
-   read as "alive" instead of "pulsing." */
-@keyframes halo-drift-a {
-  0%, 100% { opacity: 0.55; transform: translate3d(-3%, 0, 0); }
-  50%      { opacity: 0.95; transform: translate3d(3%, 0, 0); }
-}
-
-@keyframes halo-drift-b {
-  0%, 100% { opacity: 0.4; transform: translate3d(4%, 0, 0); }
-  50%      { opacity: 0.85; transform: translate3d(-4%, 0, 0); }
-}
-
-@keyframes halo-drift-c {
-  0%, 100% { opacity: 0.5; transform: translate3d(0, -10%, 0) scale(1.05); }
-  50%      { opacity: 0.85; transform: translate3d(0, 10%, 0) scale(1.1); }
-}
-
-/* Outer rim glow breathing — modulates the box-shadow intensity by
-   animating an overlay's opacity rather than the shadow itself (cheaper). */
-@keyframes rim-breathe {
-  0%, 100% { opacity: 0.65; }
-  50%      { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }

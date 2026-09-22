@@ -1,46 +1,103 @@
+'use client'
+
+import { useState } from 'react'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import WavyBackground from './WavyBackground'
-import HeroLink from './HeroLink'
+import HeroLink, { linkClass } from './HeroLink'
+
+const EMAIL = 'talpo.n@northeastern.edu'
 
 const links = [
-  { label: 'LinkedIn', href: '#', external: true },
-  { label: 'Resume', href: '/resume.pdf', external: true },
-  { label: 'GitHub', href: '#', external: true },
-  { label: 'Email', href: 'mailto:placeholder@example.com', external: false },
+  { label: 'LinkedIn', href: '#' },
+  { label: 'GitHub', href: '#' },
+  { label: 'Resume', href: '/resume.pdf' },
 ]
 
+const container: Variants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.15 } },
+}
+
+const item: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
+  },
+}
+
 export default function Hero() {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopyEmail = async () => {
+    try {
+      await navigator.clipboard.writeText(EMAIL)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1600)
+    } catch {
+      window.location.href = `mailto:${EMAIL}`
+    }
+  }
+
   return (
-    <section className="relative flex items-center min-h-screen overflow-hidden">
+    <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
+      {/* Back plane: cursor-reactive line field. The only moving thing in the
+          hero, and the only element the page layers anything on top of. */}
       <WavyBackground />
 
-      <div className="relative z-10 pl-6 md:pl-16 lg:pl-24 pr-6 pt-32 max-w-xl">
-        <p className="text-[11px] text-neutral-500 mb-8 tracking-[0.25em] uppercase">
-          Software Engineer
-        </p>
+      {/* Front plane: centered type block. */}
+      <motion.div
+        className="relative z-10 flex flex-col items-center px-6 text-center"
+        variants={container}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.h1
+          variants={item}
+          className="mb-8 text-[clamp(3.5rem,11vw,8.5rem)] leading-[0.9] tracking-[-0.02em] text-ink"
+        >
+          Aidan Wu
+        </motion.h1>
 
-        <h1 className="italic text-7xl md:text-8xl tracking-tight text-neutral-100 mb-10 leading-[0.95]">
-          Aidan<span className="text-purple-400 not-italic">.</span>
-        </h1>
-
-        <p className="text-lg text-neutral-400 leading-relaxed mb-12 max-w-md">
+        <motion.p
+          variants={item}
+          className="mb-10 max-w-[34rem] text-[0.975rem] leading-[1.75] text-muted"
+        >
           I&apos;m a [year] studying [major] at [university]. I spend most of my time
           building software, thinking about [topic], and occasionally losing at chess.
-          My work tends to live at the intersection of [field A] and [field B] —
-          drawn to problems where there&apos;s a hard technical challenge behind a
-          clear real-world impact.
-        </p>
+        </motion.p>
 
-        <div className="flex items-center flex-wrap gap-x-3 gap-y-2 text-sm italic text-neutral-400">
-          {links.map((link, i) => (
-            <span key={link.label} className="flex items-center gap-3">
-              {i > 0 && <span className="text-neutral-700 not-italic">—</span>}
-              <HeroLink href={link.href} external={link.external}>
-                {link.label}
-              </HeroLink>
-            </span>
+        <motion.div
+          variants={item}
+          className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm"
+        >
+          {links.map((link) => (
+            <HeroLink key={link.label} href={link.href} external>
+              {link.label}
+            </HeroLink>
           ))}
-        </div>
-      </div>
+          <button
+            type="button"
+            onClick={handleCopyEmail}
+            className={`${linkClass} cursor-pointer`}
+            aria-label={copied ? 'Email copied to clipboard' : 'Copy email to clipboard'}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={copied ? 'copied' : 'email'}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                className="inline-block"
+              >
+                {copied ? 'Copied' : 'Email'}
+              </motion.span>
+            </AnimatePresence>
+          </button>
+        </motion.div>
+      </motion.div>
     </section>
   )
 }

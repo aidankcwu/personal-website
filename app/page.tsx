@@ -1,26 +1,24 @@
-import Navbar from '@/components/Navbar'
 import Hero from '@/components/Hero'
-import SectionDivider from '@/components/SectionDivider'
-import FeaturedProjects from '@/components/FeaturedProjects'
-import AwardsEducation from '@/components/AwardsEducation'
-import Footer from '@/components/Footer'
-import FixedKing from '@/components/FixedKing'
-import Grain from '@/components/Grain'
+import SectionBreak from '@/components/SectionBreak'
+import InfoBlock from '@/components/InfoBlock'
+import Projects from '@/components/Projects'
+import PersistentKing from '@/components/PersistentKing'
+import { featuredProjects } from '@/data/projects'
 
 export default function Home() {
   return (
     <>
-      <FixedKing />
-      <Grain />
+      {/* The only element on the page with depth. Lives outside <main> because
+          it persists across every section — it is never remounted. */}
+      <PersistentKing projectCount={featuredProjects.length} />
 
-      <Navbar />
-      <main className="relative z-10 flex flex-col flex-1">
+      <main className="relative">
         <Hero />
-        <SectionDivider />
-        <FeaturedProjects />
-        <AwardsEducation />
+        <SectionBreak />
+        <InfoBlock />
+        <SectionBreak />
+        <Projects />
       </main>
-      <Footer />
     </>
   )
 }

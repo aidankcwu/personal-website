@@ -1,27 +1,41 @@
 import Link from 'next/link'
 import type { Project } from '@/data/projects'
 
-function stackPhrase(stack: string[]): string {
-  if (stack.length === 0) return ''
-  if (stack.length === 1) return stack[0]
-  if (stack.length === 2) return `${stack[0]} and ${stack[1]}`
-  return `${stack.slice(0, -1).join(', ')}, and ${stack[stack.length - 1]}`
-}
-
-export default function ProjectCard({ project }: { project: Project }) {
+// Flat by rule: no fill, no radius, no elevation. Hierarchy is type scale,
+// whitespace, and a single hairline.
+export default function ProjectCard({
+  project,
+  index,
+}: {
+  project: Project
+  index: number
+}) {
   return (
-    <Link href={`/projects/${project.slug}`} className="group block">
-      <h3 className="italic text-3xl md:text-4xl text-neutral-100 group-hover:text-purple-200 transition-colors leading-tight mb-4">
+    <Link
+      href={`/projects/${project.slug}`}
+      className="group block w-full max-w-[46rem]"
+    >
+      <div className="mb-8 flex items-center gap-6">
+        <span className="text-[0.6875rem] tabular-nums tracking-[0.2em] text-faint">
+          {String(index + 1).padStart(2, '0')}
+        </span>
+        <span className="h-px flex-1 bg-rule" />
+      </div>
+
+      <h3 className="mb-6 font-display text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.05] tracking-[-0.02em] text-ink">
         {project.title}
       </h3>
-      <p className="text-base text-neutral-400 leading-relaxed mb-3">
+
+      <p className="mb-6 max-w-[36rem] text-[0.975rem] leading-[1.75] text-muted">
         {project.summary}
       </p>
-      <p className="text-sm italic text-neutral-500 mb-5">
-        Built with {stackPhrase(project.stack)}.
+
+      <p className="mb-8 text-[0.6875rem] uppercase tracking-[0.2em] text-faint">
+        {project.stack.join(' · ')}
       </p>
-      <span className="text-[11px] tracking-[0.25em] uppercase text-neutral-500 group-hover:text-purple-300 transition-colors">
-        Read more →
+
+      <span className="relative inline-flex text-sm text-muted transition-colors duration-300 before:absolute before:left-0 before:top-[1.45em] before:h-px before:w-full before:origin-right before:scale-x-0 before:bg-current before:transition-transform before:duration-300 before:ease-[var(--ease-brand)] before:content-[''] group-hover:text-ink group-hover:before:origin-left group-hover:before:scale-x-100 motion-reduce:before:transition-none">
+        Read more
       </span>
     </Link>
   )

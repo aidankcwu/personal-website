@@ -12,12 +12,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return { title: project ? `${project.title} — Aidan Wu` : 'Not Found' }
 }
 
-function stackPhrase(stack: string[]): string {
-  if (stack.length === 0) return ''
-  if (stack.length === 1) return stack[0]
-  if (stack.length === 2) return `${stack[0]} and ${stack[1]}`
-  return `${stack.slice(0, -1).join(', ')}, and ${stack[stack.length - 1]}`
-}
+const linkClass =
+  "relative inline-flex text-sm text-muted transition-colors duration-300 before:absolute before:left-0 before:top-[1.45em] before:h-px before:w-full before:origin-right before:scale-x-0 before:bg-current before:transition-transform before:duration-300 before:ease-[var(--ease-brand)] before:content-[''] hover:text-ink hover:before:origin-left hover:before:scale-x-100"
 
 export default async function ProjectPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -25,62 +21,42 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
   if (!project) notFound()
 
   return (
-    <main className="max-w-2xl mx-auto px-6 md:px-12 py-32">
+    <main className="mx-auto max-w-[46rem] px-6 py-32 md:px-16">
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-xs tracking-[0.25em] uppercase text-neutral-500 hover:text-neutral-200 transition-colors mb-20"
+        className="mb-24 inline-flex text-[0.6875rem] uppercase tracking-[0.2em] text-faint transition-colors duration-300 hover:text-ink"
       >
-        <span className="text-neutral-700 text-base leading-none not-uppercase">♔</span>
         Back
       </Link>
 
-      <p className="text-xs tracking-[0.25em] uppercase text-neutral-500 mb-4">
-        Case study
-      </p>
-
-      <h1 className="italic text-5xl md:text-6xl tracking-tight text-neutral-100 leading-[0.95] mb-8">
+      <h1 className="mb-8 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.05] tracking-[-0.02em] text-ink">
         {project.title}
-        <span className="text-purple-400 not-italic">.</span>
       </h1>
 
-      <p className="text-sm italic text-neutral-500 mb-12">
-        Built with {stackPhrase(project.stack)}.
+      <p className="mb-16 text-[0.6875rem] uppercase tracking-[0.2em] text-faint">
+        {project.stack.join(' · ')}
       </p>
 
-      <div className="prose prose-invert max-w-none">
-        <p className="text-xl text-neutral-300 leading-relaxed mb-8 first-letter:text-5xl first-letter:italic first-letter:float-left first-letter:mr-3 first-letter:leading-none first-letter:text-purple-300/80">
-          {project.summary}
-        </p>
-        <div className="mt-8 text-neutral-400 leading-relaxed whitespace-pre-line text-base">
-          {project.description}
-        </div>
+      <p className="mb-8 text-[1.0625rem] leading-[1.75] text-ink">{project.summary}</p>
+
+      <div className="whitespace-pre-line text-[0.975rem] leading-[1.75] text-muted">
+        {project.description}
       </div>
 
-      <div className="flex items-center gap-6 mt-20 pt-10 border-t border-neutral-800">
-        {project.github && (
-          <a
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm italic text-neutral-300 hover:text-purple-300 transition-colors underline-offset-4 hover:underline"
-          >
-            GitHub ↗
-          </a>
-        )}
-        {project.link && (
-          <>
-            {project.github && <span className="text-neutral-700">—</span>}
-            <a
-              href={project.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm italic text-neutral-300 hover:text-purple-300 transition-colors underline-offset-4 hover:underline"
-            >
-              Live site ↗
+      {(project.github || project.link) && (
+        <div className="mt-20 flex items-center gap-8 border-t border-rule pt-10">
+          {project.github && (
+            <a href={project.github} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              GitHub
             </a>
-          </>
-        )}
-      </div>
+          )}
+          {project.link && (
+            <a href={project.link} target="_blank" rel="noopener noreferrer" className={linkClass}>
+              Live site
+            </a>
+          )}
+        </div>
+      )}
     </main>
   )
 }
