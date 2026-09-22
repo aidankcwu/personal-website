@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef } from 'react'
+import { onFrame } from './frameLoop'
 import { kingState } from './kingState'
 
 const KingScene = dynamic(() => import('./KingScene'), { ssr: false })
@@ -28,12 +29,9 @@ export default function PersistentKing({ projectCount }: { projectCount: number 
 
     kingState.still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
-    let raf = 0
     let lastIndex = 0
 
     const frame = () => {
-      raf = requestAnimationFrame(frame)
-
       const slot = document.getElementById('king-slot')
       const pin = document.getElementById('projects')
       if (!slot || !pin) return
@@ -70,8 +68,9 @@ export default function PersistentKing({ projectCount }: { projectCount: number 
       if (restY < vh * 1.25 || kingState.landed > 0) kingState.invalidate?.()
     }
 
-    raf = requestAnimationFrame(frame)
-    return () => cancelAnimationFrame(raf)
+    // Registered as a reader so it runs after the smooth-scroll layer has
+    // written this frame's position.
+    return onFrame(frame)
   }, [projectCount])
 
   return (

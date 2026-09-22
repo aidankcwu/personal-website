@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
+import { RoomEnvironment } from 'three-stdlib'
 import { kingState } from './kingState'
 
 const MODEL_URL = '/models/king.glb'
@@ -92,6 +93,53 @@ function makeBoardTexture(count: number) {
   return texture
 }
 
+/**
+ * Soft ellipse used as the king's contact shadow. Not a real shadow pass: the
+ * king has stopped rotating by the time it lands, so a static falloff is
+ * indistinguishable from one and costs nothing per frame.
+ */
+function makeShadowTexture() {
+  const S = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = S
+  canvas.height = S
+  const ctx = canvas.getContext('2d')!
+  const gradient = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2)
+  // Weighted to keep real density out past the king's base — the piece hides
+  // everything directly beneath it at this viewing angle, so a tight shadow is
+  // a shadow you never see.
+  gradient.addColorStop(0, 'rgba(0,0,0,0.55)')
+  gradient.addColorStop(0.45, 'rgba(0,0,0,0.44)')
+  gradient.addColorStop(0.75, 'rgba(0,0,0,0.16)')
+  gradient.addColorStop(1, 'rgba(0,0,0,0)')
+  ctx.fillStyle = gradient
+  ctx.fillRect(0, 0, S, S)
+  return new THREE.CanvasTexture(canvas)
+}
+
+/**
+ * Generates a small studio environment in memory and hands it to the scene.
+ * The king's clearcoat needs something to reflect — without this its specular
+ * has no source and the material reads as flat plastic. Built procedurally
+ * rather than loading an HDR so there's no asset and no CDN request.
+ */
+function StudioEnvironment() {
+  const gl = useThree((s) => s.gl)
+
+  const texture = useMemo(() => {
+    const pmrem = new THREE.PMREMGenerator(gl)
+    const target = pmrem.fromScene(RoomEnvironment(), 0.04)
+    pmrem.dispose()
+    return target.texture
+  }, [gl])
+
+  useEffect(() => () => texture.dispose(), [texture])
+
+  // Attached declaratively rather than assigned to scene.environment, which
+  // would be mutating a value a hook handed back.
+  return <primitive attach="environment" object={texture} />
+}
+
 /** Lets the orchestrator drive rendering while the king is on screen. */
 function Invalidator() {
   const invalidate = useThree((s) => s.invalidate)
@@ -110,8 +158,9 @@ function Scene({ count }: { count: number }) {
   const placeRef = useRef<THREE.Group>(null)
   const spinRef = useRef<THREE.Group>(null)
   const boardRef = useRef<THREE.Group>(null)
+  const shadowRef = useRef<THREE.Mesh>(null)
   const angleRef = useRef(0)
-  const squareRef = useRef(new THREE.Vector3())
+  const easedIndex = useRef(0)
   const settled = useRef(false)
 
   const built = useMemo(() => {
@@ -143,6 +192,7 @@ function Scene({ count }: { count: number }) {
       clearcoat: 0.5,
       clearcoatRoughness: 0.2,
       reflectivity: 0.35,
+      envMapIntensity: 0.55,
       side: THREE.DoubleSide,
     })
 
@@ -164,12 +214,14 @@ function Scene({ count }: { count: number }) {
       map: makeBoardTexture(count),
       roughness: 0.5,
       metalness: 0,
+      envMapIntensity: 0.3,
       transparent: true,
     })
     const edgeMaterial = new THREE.MeshStandardMaterial({
       color: DARK_WALNUT,
       roughness: 0.6,
       metalness: 0,
+      envMapIntensity: 0.3,
       transparent: true,
     })
     const board = new THREE.Mesh(
@@ -178,7 +230,28 @@ function Scene({ count }: { count: number }) {
       [edgeMaterial, edgeMaterial, topMaterial, edgeMaterial, edgeMaterial, edgeMaterial],
     )
 
-    return { king, board }
+    // Laid flat on the board's top face. Lives in board space so it inherits
+    // the tip for free.
+    const shadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        map: makeShadowTexture(),
+        transparent: true,
+        depthWrite: false,
+        // Sits a hair above the board's top face. At this camera distance that
+        // gap is under the depth buffer's precision, so without a polygon
+        // offset the shadow's fragments lose the depth test and it renders as
+        // nothing at all.
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+        opacity: 0,
+      }),
+    )
+    shadow.rotation.x = -Math.PI / 2
+    shadow.renderOrder = 1
+
+    return { king, board, shadow }
   }, [gltf, count])
 
   useFrame((_, delta) => {
@@ -225,29 +298,44 @@ function Scene({ count }: { count: number }) {
     const height = PARK_HEIGHT + (BOARD_HEIGHT - PARK_HEIGHT) * landed
     place.scale.setScalar(height)
 
-    // Base of the active square, on the board's tilted top face. Worked out
-    // directly rather than via localToWorld so it doesn't depend on when the
-    // group's world matrix was last refreshed.
-    const lift = THICKNESS / 2
-    const s = boardGroup.scale.x
-    const squareTarget = squareRef.current
-    const targetX = (kingState.index - (count - 1) / 2) * SQUARE * s
-    const targetY = BOARD_Y + lift * Math.cos(BOARD_TILT) * s
-    const targetZ = lift * Math.sin(BOARD_TILT) * s
-
+    // Eased as a fractional square index in board space rather than as world
+    // coordinates, so the king and its shadow are both derived from one number
+    // and cannot drift apart. Only the square-to-square step is eased; the
+    // landing is left driven straight off scroll so it can't lag the wheel.
     if (!settled.current || kingState.still) {
-      squareTarget.set(targetX, targetY, targetZ)
+      easedIndex.current = kingState.index
       settled.current = true
     } else {
-      // Only the square-to-square step is eased. The landing itself is left
-      // driven straight off scroll so it can't lag behind the wheel.
-      squareTarget.x += (targetX - squareTarget.x) * 0.25
-      squareTarget.y += (targetY - squareTarget.y) * 0.25
-      squareTarget.z += (targetZ - squareTarget.z) * 0.25
+      easedIndex.current += (kingState.index - easedIndex.current) * 0.25
     }
 
+    const lift = THICKNESS / 2
+    const s = boardGroup.scale.x
+    const localX = (easedIndex.current - (count - 1) / 2) * SQUARE
+
+    // Base of the active square, on the board's tipped top face. Worked out
+    // directly rather than via localToWorld so it doesn't depend on when the
+    // group's world matrix was last refreshed.
+    const squareX = localX * s
+    const squareY = BOARD_Y + lift * Math.cos(BOARD_TILT) * s
+    const squareZ = lift * Math.sin(BOARD_TILT) * s
+
     kingState.hop *= Math.pow(0.86, delta * 60)
-    const arc = kingState.still ? 0 : Math.sin(kingState.hop * Math.PI) * SQUARE * 0.9
+    const hopLift = kingState.still ? 0 : Math.sin(kingState.hop * Math.PI)
+    const arc = hopLift * SQUARE * 0.9
+
+    // Contact shadow tightens and darkens as the king settles, and spreads and
+    // lightens as it lifts — the cue that reads as leaving the surface rather
+    // than sliding along it.
+    const shadow = shadowRef.current
+    if (shadow) {
+      shadow.position.set(localX, lift + SQUARE * 0.02, 0)
+      // Capped at one square: the board is exactly one square deep, so
+      // anything wider hangs off the edge as a smudge floating in mid-air.
+      const spread = SQUARE * (1 + hopLift * 0.12)
+      shadow.scale.set(spread, spread, 1)
+      ;(shadow.material as THREE.Material).opacity = reveal * (1 - hopLift * 0.6)
+    }
 
     // Tip the king back by the same angle the board is tipped. Without this
     // the board is drawn as if seen from above while the king is drawn from
@@ -261,28 +349,32 @@ function Scene({ count }: { count: number }) {
     // orchestrator has already done the clamping; this is just the conversion
     // from viewport fractions to world units.
     const parkedY = kingState.parkOffset * VIS_H - PARK_HEIGHT / 2
-    const baseY = parkedY + (squareTarget.y + arc - parkedY) * landed
+    const baseY = parkedY + (squareY + arc - parkedY) * landed
 
     // This group's origin is the king's middle, so the offset from base to
     // middle has to follow the tip — otherwise leaning it back slides the base
     // off its square.
     const half = height / 2
     place.position.set(
-      squareTarget.x * landed,
+      squareX * landed,
       baseY + half * Math.cos(tip),
-      squareTarget.z * landed + half * Math.sin(tip),
+      squareZ * landed + half * Math.sin(tip),
     )
   })
 
   return (
     <>
-      <ambientLight intensity={0.6} />
-      <hemisphereLight args={['#ffffff', '#d8d2c8', 0.5]} />
-      <directionalLight position={[3, 5, 4]} intensity={1.5} />
-      <directionalLight position={[-4, 2, 3]} intensity={0.4} />
+      {/* Dialled back from the pre-environment values: the studio map now
+          supplies most of the fill, and leaving these as they were blew the
+          king out to flat white. */}
+      <ambientLight intensity={0.25} />
+      <hemisphereLight args={['#ffffff', '#d8d2c8', 0.25]} />
+      <directionalLight position={[3, 5, 4]} intensity={0.9} />
+      <directionalLight position={[-4, 2, 3]} intensity={0.25} />
 
       <group ref={boardRef} position={[0, BOARD_Y, 0]} rotation={[BOARD_TILT, 0, 0]}>
         <primitive object={built.board} />
+        <primitive object={built.shadow} ref={shadowRef} />
       </group>
 
       <group ref={placeRef}>
@@ -305,6 +397,7 @@ export default function KingScene({ count }: { count: number }) {
       style={{ background: 'transparent', width: '100%', height: '100%' }}
     >
       <Invalidator />
+      <StudioEnvironment />
       <Scene count={count} />
     </Canvas>
   )
