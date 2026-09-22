@@ -44,11 +44,11 @@ export default function InfoBlock() {
         <Cell cell={awards} delay={0.08} />
       </div>
 
-      {/* Centre column: narrow viewport the persistent king is parked in. The
-          king itself is a fixed-position element outside this tree — this is
-          only the measurement anchor and the hairline rules that frame it. */}
+      {/* Centre column: the king's slot. The king itself is a full-viewport 3D
+          layer outside this tree, but it tracks this column's centre until it
+          pins, so this element is what gives it its place in the layout. */}
       <div
-        id="king-anchor-info"
+        id="king-slot"
         aria-hidden="true"
         className="min-h-[220px] border-y border-rule md:min-h-0 md:border-x md:border-y-0"
       />

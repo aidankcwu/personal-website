@@ -38,6 +38,16 @@ h3 {
   font-style: normal;
 }
 
+/* The king's canvas covers the whole viewport. React Three Fiber sets
+   pointer-events: auto on its own container and on the canvas element, and a
+   descendant re-enabling pointer events overrides the wrapper's
+   pointer-events: none — which left the canvas swallowing every click, hover
+   and text selection on the page beneath it. */
+.king-stage,
+.king-stage * {
+  pointer-events: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

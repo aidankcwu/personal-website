@@ -1,20 +1,24 @@
 /**
- * Fixed pixel size of the king's stage. The WebGL canvas is locked to this and
- * never resized: React Three Fiber measures its container with a
- * ResizeObserver, so applying a CSS scale to the stage would make it shrink the
- * drawing buffer to match and scale the king a second time. Size is driven
- * inside the 3D scene instead.
- */
-export const STAGE = 360
-
-/**
  * Shared mutable channel between the scroll orchestrator (PersistentKing) and
  * the render loop (KingScene). Deliberately not React state: this updates every
  * frame and must never trigger a re-render.
  */
 export const kingState = {
-  /** 1 = full ambient rotation, 0 = frozen. Eased down as the king lands. */
-  spin: 1,
-  /** Intended on-screen size in px, expressed as a stage box. */
-  size: STAGE,
+  /**
+   * Where the king rests before the landing, as a signed fraction of viewport
+   * height above the centre of the screen. Tracks its slot in the info block
+   * while that slot is below centre, then holds at 0 — in flow, then pinned.
+   * Starts well below the fold so nothing shows over the hero.
+   */
+  parkOffset: -2,
+  /** 0 = parked and spinning, 1 = landed on the board. Scroll-linked. */
+  landed: 0,
+  /** Index of the active square. */
+  index: 0,
+  /** Set to 1 on each move and decayed by the scene — drives the lift arc. */
+  hop: 0,
+  /** True once the user has asked for reduced motion. */
+  still: false,
+  /** Registered by the scene so the orchestrator can drive on-demand renders. */
+  invalidate: undefined as (() => void) | undefined,
 }

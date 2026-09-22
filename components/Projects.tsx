@@ -47,7 +47,6 @@ export default function Projects() {
           occluded by the strokes themselves. */}
       <section className="flex min-h-screen items-center justify-center overflow-hidden">
         <h2
-          id="king-anchor-wordmark"
           className="relative z-30 text-center text-[clamp(4.5rem,17vw,14rem)] leading-none tracking-[-0.03em] text-ink"
         >
           Projects
@@ -62,7 +61,9 @@ export default function Projects() {
         style={{ height: `${count * 100}vh` }}
         className="relative"
       >
-        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        {/* Cards sit in the upper part of the pinned viewport; the board is
+            rendered in 3D below them, not in the DOM. */}
+        <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden pb-[18vh]">
           <motion.div
             className="relative z-10 flex"
             animate={{ x: `${-index * 100}vw` }}
@@ -77,25 +78,6 @@ export default function Projects() {
               </div>
             ))}
           </motion.div>
-
-          {/* Board strip: exactly one square per project. The king stands on
-              the active square — no other progress indicator. */}
-          <div className="relative z-10 mt-20 flex justify-center">
-            <div
-              id="king-board"
-              className="flex border border-rule"
-              aria-hidden="true"
-            >
-              {projects.map((project, i) => (
-                <div
-                  key={project.slug}
-                  className={`size-[clamp(2.25rem,4vw,3.25rem)] ${
-                    i % 2 === 1 ? 'bg-[#efefef]' : 'bg-surface'
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
         </div>
       </section>
     </>
