@@ -9,12 +9,17 @@ import KineticTextReveal from './KineticTextReveal'
 const EMAIL = 'talpo.n@northeastern.edu'
 
 const INTRO =
-  "I'm a [year] studying [major] at [university]. I spend most of my time building software, thinking about [topic], and occasionally losing at chess."
+  "I was born and raised in Hong Kong, and I'm currently studying CS and Operations Research at Rice University. I'm interested in all things AI, especially agentic AI and LLM research, as well as ML and data science. This past summer I worked at Linvest21 as an AI SWE intern, building out the infrastructure for their financial agents, and right now I'm part of OptimaLab at Rice, doing research on quantization and KV cache optimization for LLMs."
 
-// The three reveals run back to back rather than overlapping, so the eye is
-// led name -> intro -> links instead of taking in three moving things at once.
-const INTRO_DELAY = 0.75
-const LINKS_DELAY = 1.5
+const OUTRO =
+  "Outside of academics, I'm an ex-competitive chess player and chess coach, and I spend most of my free time weightlifting, playing poker, running long distance, and trying new food. Enjoy your stay :)"
+
+// The reveals run back to back rather than overlapping, so the eye is led
+// name -> intro -> outro -> links instead of taking in everything at once.
+const INTRO_DELAY = 0.55
+const OUTRO_DELAY = 1.45
+const LINKS_DELAY = 2.45
+const WORD_STAGGER = 0.012
 
 const links = [
   { label: 'LinkedIn', href: '#' },
@@ -53,13 +58,24 @@ export default function Hero() {
           />
         </h1>
 
-        <p className="mb-10 max-w-[34rem] text-[0.975rem] leading-[1.75] text-muted">
+        <p className="mb-4 max-w-[52rem] text-[0.975rem] leading-[1.75] text-muted">
           <KineticTextReveal
             text={INTRO}
             splitBy="words"
             distance={14}
-            stagger={0.016}
+            stagger={WORD_STAGGER}
             delay={INTRO_DELAY}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </p>
+
+        <p className="mb-10 max-w-[52rem] text-[0.975rem] leading-[1.75] text-muted">
+          <KineticTextReveal
+            text={OUTRO}
+            splitBy="words"
+            distance={14}
+            stagger={WORD_STAGGER}
+            delay={OUTRO_DELAY}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           />
         </p>

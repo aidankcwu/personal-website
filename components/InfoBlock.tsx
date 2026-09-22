@@ -1,4 +1,5 @@
-import { awards, education, languages, skills, type InfoCell } from '@/data/info'
+import { awards, education, skills, type InfoCell } from '@/data/info'
+import ExperienceCell from './ExperienceCell'
 import RevealOnScroll from './RevealOnScroll'
 
 function Cell({ cell, delay }: { cell: InfoCell; delay: number }) {
@@ -36,7 +37,7 @@ export default function InfoBlock() {
   return (
     <section
       id="info"
-      className="relative z-10 grid grid-cols-1 md:grid-cols-[1fr_clamp(140px,15vw,220px)_1fr]"
+      className="relative z-10 grid grid-cols-1 md:grid-cols-[1fr_clamp(300px,30vw,520px)_1fr]"
     >
       {/* Left column: two stacked cells split by a hairline. */}
       <div className="divide-y divide-rule">
@@ -53,10 +54,13 @@ export default function InfoBlock() {
         className="min-h-[220px] border-y border-rule md:min-h-0 md:border-x md:border-y-0"
       />
 
-      {/* Right column. */}
+      {/* Right column. Experience sits on top: reading order across the grid
+          runs left-top, left-bottom, right-top, right-bottom, and it's the
+          strongest material here. Skills is a reference list and reads fine
+          last. */}
       <div className="divide-y divide-rule">
-        <Cell cell={skills} delay={0.04} />
-        <Cell cell={languages} delay={0.12} />
+        <ExperienceCell delay={0.04} />
+        <Cell cell={skills} delay={0.12} />
       </div>
     </section>
   )

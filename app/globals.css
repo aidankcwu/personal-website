@@ -49,6 +49,70 @@ h3 {
 
 /* Only applies when smooth scrolling is off — Lenis is disabled under
    reduced motion, and this keeps anchor jumps instant rather than animated. */
+/* Paired with Lenis being stopped — see scrollLock.ts. */
+html.scroll-locked {
+  overflow: hidden;
+}
+
+/* Modal dialog. The panel itself stays flat to match the rest of the page —
+   hairline border, no shadow, no radius. The separation comes from the
+   backdrop, which is the one place blur is allowed: a modal is a layer above
+   the interface rather than a part of it.
+
+   allow-discrete plus @starting-style is what lets a dialog animate at all;
+   without it the element flips straight between display none and block. */
+dialog.modal-panel {
+  margin: auto;
+  max-height: min(80vh, 48rem);
+  overflow-y: auto;
+  opacity: 0;
+  transform: translateY(10px) scale(0.985);
+  transition:
+    opacity 0.32s var(--ease-brand),
+    transform 0.32s var(--ease-brand),
+    overlay 0.32s allow-discrete,
+    display 0.32s allow-discrete;
+}
+
+dialog.modal-panel[open] {
+  opacity: 1;
+  transform: none;
+}
+
+@starting-style {
+  dialog.modal-panel[open] {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+}
+
+dialog.modal-panel::backdrop {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transition:
+    opacity 0.32s var(--ease-brand),
+    overlay 0.32s allow-discrete,
+    display 0.32s allow-discrete;
+}
+
+dialog.modal-panel[open]::backdrop {
+  opacity: 1;
+}
+
+@starting-style {
+  dialog.modal-panel[open]::backdrop {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.modal-panel,
+  dialog.modal-panel::backdrop {
+    transition: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

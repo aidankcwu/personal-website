@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import Lenis from 'lenis'
 import { FRAME_ORDER, onFrame } from './frameLoop'
+import { registerLenis } from './scrollLock'
 
 /**
  * Interpolates the scroll position instead of letting it jump.
@@ -31,10 +32,12 @@ export default function SmoothScroll() {
       anchors: true,
     })
 
+    registerLenis(lenis)
     const stop = onFrame((time) => lenis.raf(time), FRAME_ORDER.scroll)
 
     return () => {
       stop()
+      registerLenis(null)
       lenis.destroy()
     }
   }, [])

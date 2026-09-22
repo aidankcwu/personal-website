@@ -11,6 +11,8 @@ export const kingState = {
    * Starts well below the fold so nothing shows over the hero.
    */
   parkOffset: -2,
+  /** Smoothed scroll speed in px/s. Positive is scrolling down. */
+  scrollVelocity: 0,
   /** 0 = parked and spinning, 1 = landed on the board. Scroll-linked. */
   landed: 0,
   /** Index of the active square. */

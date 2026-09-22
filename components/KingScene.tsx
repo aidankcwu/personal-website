@@ -16,7 +16,7 @@ const CAM = new THREE.Vector3(0, 0.6, 6)
 const VIS_H = 2 * CAM.length() * Math.tan((FOV / 2) * (Math.PI / 180))
 
 /** King height, parked and on the board, as a fraction of viewport height. */
-const PARK_HEIGHT = VIS_H * 0.36
+const PARK_HEIGHT = VIS_H * 0.45
 const BOARD_HEIGHT = VIS_H * 0.13
 
 const SQUARE = BOARD_HEIGHT / 1.4
@@ -35,12 +35,26 @@ const BOARD_TILT = 0.42
 /** Spin rate below which the king starts righting itself for the landing. */
 const SETTLE_FROM = 0.75
 
+/** Drift speed, in rad/s, once you stop scrolling. */
+const IDLE_SPEED = 0.32
+/** Rotation per unit of scroll speed — rad/s per px/s. */
+const SCROLL_GAIN = 0.0045
+/** Ceiling on spin, or a fast flick turns the king into a blur. */
+const MAX_SPIN = 9
+/** Scroll speed, px/s, at which scroll fully takes over from the idle drift. */
+const ACTIVITY_FULL = 260
+/** How quickly the spin eases toward its target speed. Lower is heavier. */
+const SPIN_DECAY = 7
+/** Below this scroll speed the drift direction is left alone. */
+const DRIFT_FLIP_AT = 60
+
 /** Matches the original: rotation about a slightly off-vertical axis. */
 const SPIN_AXIS = new THREE.Vector3(0.18, 1, 0.07).normalize()
 
 const LIGHT_WALNUT = '#c69a6a'
 const DARK_WALNUT = '#4a3323'
 
+const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v))
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
 const smoothstep = (a: number, b: number, x: number) => {
   const t = clamp01((x - a) / (b - a))
@@ -160,6 +174,8 @@ function Scene({ count }: { count: number }) {
   const boardRef = useRef<THREE.Group>(null)
   const shadowRef = useRef<THREE.Mesh>(null)
   const angleRef = useRef(0)
+  const spinSpeed = useRef(IDLE_SPEED)
+  const driftSign = useRef(1)
   const easedIndex = useRef(0)
   const settled = useRef(false)
 
@@ -266,7 +282,33 @@ function Scene({ count }: { count: number }) {
     if (kingState.still) {
       spin.rotation.set(0, 0, 0)
     } else {
-      angleRef.current += delta * 0.42 * spinRate
+      const velocity = kingState.scrollVelocity
+
+      // Whichever way you last pushed it is the way it keeps drifting. Only
+      // meaningful scroll updates this, so coasting to a stop doesn't flip the
+      // direction on noise near zero.
+      if (Math.abs(velocity) > DRIFT_FLIP_AT) {
+        driftSign.current = Math.sign(velocity)
+      }
+
+      // Crossfade, not sum. Adding a constant idle speed to a signed scroll
+      // speed makes them cancel whenever you scroll against the drift, so
+      // scrolling one way feels strong and the other way feels dead. Fading
+      // the idle out while you scroll keeps both directions symmetrical.
+      const activity = smoothstep(0, ACTIVITY_FULL, Math.abs(velocity))
+      const idle = IDLE_SPEED * driftSign.current
+      const driven = clamp(velocity * SCROLL_GAIN, -MAX_SPIN, MAX_SPIN)
+      const targetSpeed = idle * (1 - activity) + driven * activity
+
+      // Flywheel, so the king carries a little momentum rather than snapping
+      // between speeds. Exponential to stay frame-rate independent.
+      spinSpeed.current +=
+        (targetSpeed - spinSpeed.current) * (1 - Math.exp(-SPIN_DECAY * delta))
+
+      // Scaled by spinRate so the spin winds down as the king lands, instead
+      // of fighting the settle below at the moment it's trying to come to rest.
+      angleRef.current += spinSpeed.current * delta * spinRate
+
       // Once the landing starts, the king eases toward the nearest full turn
       // so it arrives upright and facing the viewer rather than frozen
       // mid-rotation. The threshold is high — settling begins early in the

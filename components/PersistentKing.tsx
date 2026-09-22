@@ -30,8 +30,11 @@ export default function PersistentKing({ projectCount }: { projectCount: number 
     kingState.still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
     let lastIndex = 0
+    let lastScrollY = window.scrollY
+    let lastTime = performance.now()
+    let velocity = 0
 
-    const frame = () => {
+    const frame = (time: number) => {
       const slot = document.getElementById('king-slot')
       const pin = document.getElementById('projects')
       if (!slot || !pin) return
@@ -39,6 +42,18 @@ export default function PersistentKing({ projectCount }: { projectCount: number 
       const vh = window.innerHeight
       const rs = slot.getBoundingClientRect()
       const rp = pin.getBoundingClientRect()
+
+      // Signed scroll speed, differenced here rather than read off the smooth
+      // scroll layer so it still works when that layer is switched off. This
+      // callback runs after the scroll position is written, so the value is
+      // already smoothed; the filter below just takes the edge off.
+      const dt = Math.min(0.1, Math.max(1 / 240, (time - lastTime) / 1000))
+      lastTime = time
+      const scrollY = window.scrollY
+      const rawVelocity = (scrollY - lastScrollY) / dt
+      lastScrollY = scrollY
+      velocity += (rawVelocity - velocity) * (1 - Math.exp(-14 * dt))
+      kingState.scrollVelocity = velocity
 
       // In flow while the slot sits below the middle of the screen, pinned once
       // it arrives. max() is the whole sticky behaviour: follow the slot down

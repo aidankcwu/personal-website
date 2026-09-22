@@ -42,12 +42,11 @@ export default function Projects() {
 
   return (
     <>
-      {/* Wordmark band. Deliberately transparent so the persistent king passes
-          behind the letterforms — visible through the counters and the gaps,
-          occluded by the strokes themselves. */}
+      {/* Wordmark band. Sits below the king's layer, so the king crosses in
+          front of the letterforms rather than being occluded by them. */}
       <section className="flex min-h-screen items-center justify-center overflow-hidden">
         <h2
-          className="relative z-30 text-center text-[clamp(4.5rem,17vw,14rem)] leading-none tracking-[-0.03em] text-ink"
+          className="relative z-10 text-center text-[clamp(4.5rem,17vw,14rem)] leading-none tracking-[-0.03em] text-ink"
         >
           Projects
         </h2>
