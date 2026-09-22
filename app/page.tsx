@@ -18,6 +18,17 @@ export default function Home() {
         <Hero />
         <SectionDivider />
         <FeaturedProjects />
+        {/* Thin grey end-to-end rule between sections. Fades to transparent
+            before reaching the king's visible area so it doesn't appear to
+            cut through the model. */}
+        <div
+          aria-hidden="true"
+          className="h-px"
+          style={{
+            background:
+              'linear-gradient(to right, rgb(38 38 38) 0%, rgb(38 38 38) 55%, transparent 68%)',
+          }}
+        />
         <AwardsEducation />
       </main>
       <Footer />

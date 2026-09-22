@@ -34,9 +34,23 @@ h1, h2, h3 {
   50%      { opacity: 0.85; transform: translate3d(0, 10%, 0) scale(1.1); }
 }
 
-/* Outer rim glow breathing — modulates the box-shadow intensity by
-   animating an overlay's opacity rather than the shadow itself (cheaper). */
+/* Outer rim glow breathing — keyframes the band's own box-shadow so the
+   outer aura pulses in/out without a separate overlay element. */
 @keyframes rim-breathe {
-  0%, 100% { opacity: 0.65; }
-  50%      { opacity: 1; }
+  0%, 100% {
+    box-shadow:
+      0 0 50px rgba(168, 85, 247, 0.45),
+      0 0 120px rgba(168, 85, 247, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 90px rgba(168, 85, 247, 0.7),
+      0 0 200px rgba(168, 85, 247, 0.3);
+  }
+}
+
+/* Subtle vertical bounce for the scroll-cue arrow on the hero. */
+@keyframes scroll-bounce {
+  0%, 100% { transform: translateY(0); opacity: 0.55; }
+  50%      { transform: translateY(6px); opacity: 1; }
 }
