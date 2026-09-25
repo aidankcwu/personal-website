@@ -21,6 +21,15 @@ export const kingState = {
   hop: 0,
   /** True once the user has asked for reduced motion. */
   still: false,
+  /**
+   * Screen-space box for each board square, in CSS pixels from the top-left of
+   * the viewport. Written by the scene, read by the DOM layer that puts a real
+   * button over each square. The canvas cannot take the clicks itself: it is
+   * full-viewport, so giving it pointer events swallows every link on the page.
+   */
+  squares: [] as { x: number; y: number; w: number; h: number }[],
+  /** Board fade-in, 0 to 1. Gates the square buttons. */
+  boardReveal: 0,
   /** Registered by the scene so the orchestrator can drive on-demand renders. */
   invalidate: undefined as (() => void) | undefined,
 }

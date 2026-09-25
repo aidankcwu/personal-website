@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { useEffect, useRef } from 'react'
+import BoardSquares from './BoardSquares'
 import { onFrame } from './frameLoop'
 import { kingState } from './kingState'
 
@@ -89,12 +90,18 @@ export default function PersistentKing({ projectCount }: { projectCount: number 
   }, [projectCount])
 
   return (
-    <div
-      ref={stageRef}
-      aria-hidden="true"
-      className="king-stage pointer-events-none fixed inset-0 z-20"
-    >
-      <KingScene count={projectCount} />
-    </div>
+    <>
+      <div
+        ref={stageRef}
+        aria-hidden="true"
+        className="king-stage pointer-events-none fixed inset-0 z-20"
+      >
+        <KingScene count={projectCount} />
+      </div>
+
+      {/* Sibling, not a child: everything inside .king-stage is forced
+          click-through, and these have to take clicks. */}
+      <BoardSquares />
+    </>
   )
 }

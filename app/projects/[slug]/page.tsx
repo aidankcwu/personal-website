@@ -33,15 +33,21 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
         {project.title}
       </h1>
 
-      <p className="mb-16 text-[0.6875rem] uppercase tracking-[0.2em] text-faint">
-        {project.stack.join(' · ')}
-      </p>
+      {project.stack.length > 0 && (
+        <p className="mb-16 text-[0.6875rem] uppercase tracking-[0.2em] text-faint">
+          {project.stack.join(' · ')}
+        </p>
+      )}
 
-      <p className="mb-8 text-[1.0625rem] leading-[1.75] text-ink">{project.summary}</p>
+      {project.summary && (
+        <p className="mb-8 text-[1.0625rem] leading-[1.75] text-ink">{project.summary}</p>
+      )}
 
-      <div className="whitespace-pre-line text-[0.975rem] leading-[1.75] text-muted">
-        {project.description}
-      </div>
+      {project.description && (
+        <div className="whitespace-pre-line text-[0.975rem] leading-[1.75] text-muted">
+          {project.description}
+        </div>
+      )}
 
       {(project.github || project.link) && (
         <div className="mt-20 flex items-center gap-8 border-t border-rule pt-10">

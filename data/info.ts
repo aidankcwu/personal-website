@@ -2,6 +2,8 @@ export type InfoRow = {
   primary: string
   secondary?: string
   meta?: string
+  /** Renders indented and lighter, as an attribute of the row above it. */
+  sub?: boolean
 }
 
 export type InfoCell = {
@@ -21,11 +23,16 @@ export const education: InfoCell = {
       primary: 'Coursework',
       secondary:
         'Optimization for AI, Optimization & Graph Theory, Discrete Math & Algorithms, Statistics for Data Science',
+      sub: true,
     },
     {
       primary: 'Activities',
       secondary:
         'Rice Data Science, Rice Machine Learning, Rice INFORMS, Rice Quantitative Fund',
+      sub: true,
+    },
+    {
+      primary: 'Hong Kong International School',
     },
   ],
 }
@@ -110,6 +117,16 @@ export const experience: ExperienceEntry[] = [
     detail: [
       'Building an LLM pipeline that polls a client inbox handling ~700 requests/week and drafts a reply directly into the inbox for human approval.',
       'Scoping supported request types and planning integration into existing workflows directly with non-technical staff.',
+    ],
+  },
+  {
+    slug: 'iqon-solutions',
+    company: 'iQON Solutions',
+    role: 'Software Engineering Intern',
+    location: '',
+    period: '',
+    detail: [
+      'Built a feature for a construction AI startup.',
     ],
   },
   {

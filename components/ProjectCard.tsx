@@ -26,13 +26,17 @@ export default function ProjectCard({
         {project.title}
       </h3>
 
-      <p className="mb-6 max-w-[36rem] text-[0.975rem] leading-[1.75] text-muted">
-        {project.summary}
-      </p>
+      {project.summary && (
+        <p className="mb-6 max-w-[36rem] text-[0.975rem] leading-[1.75] text-muted">
+          {project.summary}
+        </p>
+      )}
 
-      <p className="mb-8 text-[0.6875rem] uppercase tracking-[0.2em] text-faint">
-        {project.stack.join(' · ')}
-      </p>
+      {project.stack.length > 0 && (
+        <p className="mb-8 text-[0.6875rem] uppercase tracking-[0.2em] text-faint">
+          {project.stack.join(' · ')}
+        </p>
+      )}
 
       <span className="relative inline-flex text-sm text-muted transition-colors duration-300 before:absolute before:left-0 before:top-[1.45em] before:h-px before:w-full before:origin-right before:scale-x-0 before:bg-current before:transition-transform before:duration-300 before:ease-[var(--ease-brand)] before:content-[''] group-hover:text-ink group-hover:before:origin-left group-hover:before:scale-x-100 motion-reduce:before:transition-none">
         Read more

@@ -23,7 +23,7 @@ const SQUARE = BOARD_HEIGHT / 1.4
 const THICKNESS = SQUARE * 0.2
 
 /** Board centre, below the viewport centre. */
-const BOARD_Y = -VIS_H * 0.19
+const BOARD_Y = -VIS_H * 0.26
 /**
  * Tilt of the board's top face away from the camera, in radians. Small values
  * lay the board flatter, which foreshortens it into a slim strip and brings its
@@ -173,6 +173,9 @@ function Scene({ count }: { count: number }) {
   const spinRef = useRef<THREE.Group>(null)
   const boardRef = useRef<THREE.Group>(null)
   const shadowRef = useRef<THREE.Mesh>(null)
+  const parkShadowRef = useRef<THREE.Mesh>(null)
+  const basePoint = useRef(new THREE.Vector3())
+  const corner = useRef(new THREE.Vector3())
   const angleRef = useRef(0)
   const spinSpeed = useRef(IDLE_SPEED)
   const driftSign = useRef(1)
@@ -267,10 +270,25 @@ function Scene({ count }: { count: number }) {
     shadow.rotation.x = -Math.PI / 2
     shadow.renderOrder = 1
 
-    return { king, board, shadow }
+    // Shadow for the parked king, where there is no board to cast onto.
+    // Deliberately NOT laid flat: the camera sits almost level with the parked
+    // king, so a horizontal plane would be edge-on and collapse to nothing. A
+    // camera-facing ellipse tucked under the base reads as a soft pool instead.
+    const parkShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        map: makeShadowTexture(),
+        transparent: true,
+        depthWrite: false,
+        opacity: 0,
+      }),
+    )
+    parkShadow.renderOrder = -1
+
+    return { king, board, shadow, parkShadow }
   }, [gltf, count])
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     const place = placeRef.current
     const spin = spinRef.current
     const boardGroup = boardRef.current
@@ -379,6 +397,17 @@ function Scene({ count }: { count: number }) {
       ;(shadow.material as THREE.Material).opacity = reveal * (1 - hopLift * 0.6)
     }
 
+    // Parked shadow. Fades out before the board shadow fades in, so the two
+    // never overlap and the handover reads as one shadow following the king
+    // down rather than two crossfading.
+    const parkShadow = parkShadowRef.current
+    if (parkShadow) {
+      const strength = 1 - smoothstep(0, 0.45, landed)
+      ;(parkShadow.material as THREE.Material).opacity = strength * 0.85
+      parkShadow.visible = strength > 0.001
+      parkShadow.scale.set(height * 0.62, height * 0.15, 1)
+    }
+
     // Tip the king back by the same angle the board is tipped. Without this
     // the board is drawn as if seen from above while the king is drawn from
     // eye level, and the king reads as a flat cutout on a 3D board. Ramped
@@ -402,6 +431,55 @@ function Scene({ count }: { count: number }) {
       baseY + half * Math.cos(tip),
       squareZ * landed + half * Math.sin(tip),
     )
+
+    // Tracks the base of the piece rather than the centre of its group. The
+    // spin axis is deliberately off-vertical, so the foot swings through a
+    // cone while the group's centre stays put — anchoring the shadow to the
+    // centre leaves it sitting beside the king instead of under it.
+    if (parkShadow) {
+      place.updateMatrixWorld()
+      const foot = basePoint.current.set(0, -0.5, 0).applyQuaternion(spin.quaternion)
+      place.localToWorld(foot)
+      parkShadow.position.set(foot.x, foot.y + height * 0.03, foot.z - height * 0.12)
+    }
+
+    // Screen-space box per square, so the DOM can lay a real button over each
+    // one. Projected here because only the scene knows where the board ended
+    // up, and the matrix is refreshed first because the scale above was set
+    // this frame and would otherwise still be a frame behind.
+    kingState.boardReveal = reveal
+    if (reveal > 0.01) {
+      const { camera, size } = state
+      boardGroup.updateMatrixWorld()
+      const half = SQUARE / 2
+      for (let i = 0; i < count; i++) {
+        const cx = (i - (count - 1) / 2) * SQUARE
+        let minX = Infinity
+        let maxX = -Infinity
+        let minY = Infinity
+        let maxY = -Infinity
+        for (let c = 0; c < 4; c++) {
+          const v = corner.current.set(
+            cx + (c & 1 ? half : -half),
+            lift,
+            c & 2 ? half : -half,
+          )
+          boardGroup.localToWorld(v).project(camera)
+          const px = (v.x * 0.5 + 0.5) * size.width
+          const py = (-v.y * 0.5 + 0.5) * size.height
+          minX = Math.min(minX, px)
+          maxX = Math.max(maxX, px)
+          minY = Math.min(minY, py)
+          maxY = Math.max(maxY, py)
+        }
+        const box = kingState.squares[i] ?? (kingState.squares[i] = { x: 0, y: 0, w: 0, h: 0 })
+        box.x = minX
+        box.y = minY
+        box.w = maxX - minX
+        box.h = maxY - minY
+      }
+      kingState.squares.length = count
+    }
   })
 
   return (
@@ -418,6 +496,8 @@ function Scene({ count }: { count: number }) {
         <primitive object={built.board} />
         <primitive object={built.shadow} ref={shadowRef} />
       </group>
+
+      <primitive object={built.parkShadow} ref={parkShadowRef} />
 
       <group ref={placeRef}>
         <group ref={spinRef}>

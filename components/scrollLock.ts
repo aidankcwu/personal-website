@@ -26,3 +26,10 @@ export function unlockScroll() {
   lenis?.start()
   document.documentElement.classList.remove('scroll-locked')
 }
+
+/** Scrolls through Lenis when it's running, so the jump matches the page's
+ *  own easing rather than fighting it with a second animation. */
+export function scrollToY(y: number) {
+  if (lenis) lenis.scrollTo(y)
+  else window.scrollTo({ top: y, behavior: 'smooth' })
+}

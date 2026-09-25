@@ -8,11 +8,22 @@ function Cell({ cell, delay }: { cell: InfoCell; delay: number }) {
       <p className="mb-7 text-[0.625rem] uppercase tracking-[0.22em] text-faint">
         {cell.label}
       </p>
-      <div className="flex flex-col gap-5">
+      {/* Flat list, but a row marked `sub` is an attribute of the row above it,
+          so it indents and sets smaller. Spacing is per-row rather than a
+          container gap: a sub-row has to sit closer to its parent than two
+          top-level rows sit to each other, or the nesting reads as ambiguous. */}
+      <div className="flex flex-col">
         {cell.rows.map((row) => (
-          <div key={row.primary} className="group">
+          <div
+            key={row.primary}
+            className={`group first:mt-0 ${row.sub ? 'mt-3 pl-5' : 'mt-5'}`}
+          >
             <div className="flex items-baseline justify-between gap-6">
-              <span className="text-[0.9375rem] leading-snug text-ink transition-transform duration-300 ease-[var(--ease-brand)] group-hover:translate-x-1 motion-reduce:transition-none">
+              <span
+                className={`leading-snug text-ink transition-transform duration-300 ease-[var(--ease-brand)] group-hover:translate-x-1 motion-reduce:transition-none ${
+                  row.sub ? 'text-[0.8125rem]' : 'text-[0.9375rem]'
+                }`}
+              >
                 {row.primary}
               </span>
               {row.meta && (
