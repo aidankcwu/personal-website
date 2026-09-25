@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import WavyBackground from './WavyBackground'
 import HeroLink, { linkClass } from './HeroLink'
@@ -48,7 +49,28 @@ export default function Hero() {
 
       {/* Front plane: centered type block. */}
       <div className="relative z-10 flex flex-col items-center px-6 text-center">
-        <h1 className="mb-8 text-[clamp(3.5rem,11vw,8.5rem)] leading-[0.9] tracking-[-0.02em] text-ink">
+        {/* Photo and name share one row. Sized in `em` so it tracks the
+            name's clamp at every viewport width instead of needing its own
+            breakpoints. No alt text: the heading beside it already says the
+            name, and duplicating it would read the name twice. */}
+        <h1 className="mb-8 flex items-center justify-center gap-[0.3em] text-[clamp(3.5rem,11vw,8.5rem)] leading-[0.9] tracking-[-0.02em] text-ink">
+          <motion.span
+            className="block size-[0.62em] shrink-0 -translate-y-[0.07em] overflow-hidden rounded-full"
+            initial={{ opacity: 0, scale: 0.72 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+          >
+            <Image
+              src="/images/aidan.jpg"
+              alt=""
+              width={512}
+              height={512}
+              sizes="168px"
+              priority
+              className="h-full w-full object-cover"
+            />
+          </motion.span>
+
           <KineticTextReveal
             text="Aidan Wu"
             splitBy="characters"
